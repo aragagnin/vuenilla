@@ -12,12 +12,10 @@ Why not just use Vue 1.0, you may ask? As opposed to Vue1.0, Vuenilla makes stro
  
 ## Quickstart
 
-You can find the latest stable version (1.0.0) of Vuenilla [here](https://velvety-meerkat-759da6.netlify.app/vuenilla.js) and the minified version [here](https://velvety-meerkat-759da6.netlify.app/vuenilla.min.js).
-
 To test Vuenilla, copy-paste these lines of code on an HTML file:
 
 ```html
-<script src="https://velvety-meerkat-759da6.netlify.app/vuenilla.min.js"></script> 
+<script src="https://github.com/aragagnin/vuenilla/releases/download/1.0.4/vuenilla1.0.4.js"></script> 
 <h1 id="app">  ${message} </h1>
 <script defer>
   Vuenilla.bootstrap(document.getElementById("app"), {message: 'Hello World!'})
@@ -38,6 +36,12 @@ To test Vuenilla, copy-paste these lines of code on an HTML file:
 - [Live example](https://jsfiddle.net/aragagnin/xLhtuvw9/2/): fetch data from the web using async/await
 
 You can try all tests at once here: https://velvety-meerkat-759da6.netlify.app/tests.html
+
+## Releases and CDN
+
+You can find the latest stable version (1.0.4) of Vuenilla here: https://github.com/aragagnin/vuenilla/releases/tag/1.0.4 and the JS urls are
+- https://github.com/aragagnin/vuenilla/releases/download/1.0.4/vuenilla1.0.4.js for the human-readable version
+- https://github.com/aragagnin/vuenilla/releases/download/1.0.4/vuenilla1.0.4.min.js for the minified version 
 
 ## Contribute, test, and deploy
 
