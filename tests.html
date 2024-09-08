@@ -1,0 +1,331 @@
+<script src="vuenilla.js"></script>
+<style>
+  .black {  background-color: black; }
+  .red {  color: red !important; }
+  .gray {  color: gray; }
+</style>
+
+<h1 id="app">  ${message} </h1>
+<script defer>
+  Vuenilla.bootstrap(document.getElementById("app"), {message: 'Hello World! from Vuenilla '+Vuenilla.version})
+</script>
+
+<hr/>
+
+<h1>Test1: bind and events</h1>
+<div id="app1">
+  <h3>Events</h3>
+  <!-- bind events using `@` -->
+  <!-- the component data inside UI functions are stored in the `_` variable   -->
+  <button @click="_.count ++" id="app1click">
+    <!-- the templating is the JS native one with ${variable name} -->
+    You clicked me ${ count } times
+  </button>
+  <!-- you can also call a component function -->
+  <button @click="_.reset()" id="app1reset"> Reset click count </button>
+  <!--  bind attributes using `:` -->
+  count = <input disabled :value="count">
+</div>
+<script defer>  
+  Vuenilla.bootstrap(document.getElementById("app1"), {
+    count: 0,
+    /*  both data and methods are on the same object */
+    reset: function() {
+      /* access the current instance data with this */
+      this.count = 0;
+    },
+  })
+</script>
+
+<hr/>
+
+<h1>Test2: model binding with v-model</h1>
+<div id="app2">
+  <h3>Bind input</h3>
+  <input v-model="text" id="app2text"/> text = ${text}
+  <h3>Bind checkbox</h3>
+  <input type="checkbox" v-model="flag"  id="app2check"/> flag = ${flag}
+  <h3>Bind textbox</h3>
+  <textarea v-model="multiline"  id="app2textarea"></textarea> 
+  <pre>${multiline}</pre>
+  <h3>Bind select</h3>
+  <select v-model="select"  id="app2select">
+    <option value="volvo">Volvo</option>
+    <option value="saab">Saab</option>
+    <option value="opel">Opel</option>
+    <option value="audi">Audi</option>
+  </select>
+  select = ${select}
+</div>
+<script defer>  
+  Vuenilla.bootstrap(document.getElementById("app2"), {
+    text : 'Edit me',
+    flag: true,
+    multiline:'Edit\nme',
+    select: 'audi',
+  })
+</script>
+
+
+<hr/>
+
+<h1>Test3:  CSS class and style binding</h1>
+<div id="app3">
+  <input type="range" min="0" max="1" step="0.1" v-model="slider" :style="{opacity: slider}" id="app3slider"> 
+  <p :class="classes" class="gray">Color Me</p>
+  <p><input type="checkbox" v-model="black" @change="_.update()"> Paint it black </p>
+  <p><input type="checkbox" v-model="red" @change="_.update()"> Color red</p>
+</div>
+<script defer>  
+  Vuenilla.bootstrap(document.getElementById("app3"),{
+    classes: new Set(),
+    black: false,
+    red: false,
+    slider: 0.5,
+    update(){
+      if(this.black) this.classes.add('black')
+      else this.classes.delete('black')
+      if(this.red) this.classes.add('red')
+      else  this.classes.delete('red')
+    },
+  })
+</script> 
+
+<hr/>
+
+<h1>Test4: v-if and v-for tests</h1>
+<div id="app4"> 
+  I have these elements:
+  <ul>
+    <li v-for="elements" v-for-item="el" v-for-index="i">
+      ${i}: ${el}
+    </li>
+  </ul>
+  <input type="checkbox" v-model="check1"> <input type="checkbox" v-model="check2">
+  (
+  <span v-if="check1 && check2">both checkboxes are on</span>
+  <span v-else-if="check1 && !check2">only checkbox1 is on</span>
+  <span v-else-if="check2">only checkbox2 is on</span>
+  <span v-else>both chexkboxes are off</span>
+  )   
+</div>
+<script defer>
+  Vuenilla.bootstrap(document.getElementById("app4"),{
+    elements: ['one','two','three','banana'],
+    check1:false,
+    check2:false
+  })
+</script>
+
+<hr/>
+
+
+<h1>Test5: components as DOM element</h1>
+<h3> Todo list </h3>
+<div id="app5">
+  <ul>
+    <li v-for="todos" v-for-item="todo" v-for-index="i">
+      <!-- notice the remove attirbute to catch events from components -->
+      <span v-mount="todo_component" :text="todo" @remove="_.todos.splice(_.i, 1);"></span>
+    </li>
+  </ul>
+  <input v-model="text"><button @click="_.add(_.text)">Add</button>
+</div>
+<template id="todo_component">
+  <style>
+    button {      border: 1px solid black;    }
+  </style>
+  <script>
+    <!-- here we put all the variable and data of this component -->
+    _.done  =  false;
+  </script>
+  <span :style="{text_decoration:_.done?'line-through':null}">
+    <!-- fire event to the container -->
+    <button @click=" _.$parent.dispatchEvent(new Event('remove',{todo: _.todo}))">x</button>
+    <!-- see how we access the component provate data -->
+    <button @click="_.done = true">v</button>
+    ${text}
+  </span>
+</template>
+<script defer>
+  Vuenilla.bootstrap(document.getElementById("app5"), {
+    todos: ['try', 'to', 'delete', 'me'],
+    text: 'new todo',
+    add: function(text) {
+      this.todos.push(text)
+    }
+  })
+</script>
+
+
+<h1>Test5: components as JS objects</h1>
+<h1> Todo list </h1>
+<div id="app6">
+  <ul>
+    <li v-for="todos" v-for-item="todo" v-for-index="i">
+      <!-- notice the remove attirbute to catch events from components -->
+      <span v-mount="todo_component" :text="todo" @remove="_.todos.splice(_.i, 1);"></span>
+    </li>
+  </ul>
+  <input v-model="text"><button @click="_.add(_.text)">Add</button>
+</div>
+<script defer>
+  /* eslint-disable no-template-curly-in-string */
+  var todo_component = {
+    $html: '<span :style="{text_decoration:_.done?\'line-through\':null}"><button @click=" _.$parent.dispatchEvent(new Event(\'remove\',{todo: _.todo}))">x</button><button @click="_.done = true">v</button> ${text} </span>',
+    done: false,
+    $mount: function(){
+      console.log('mounted');
+    }
+  }
+  Vuenilla.bootstrap(document.getElementById("app6"), {
+    todos: ['try', 'to', 'delete', 'me'],
+    text: 'new todo',
+    add: function(text) {
+      this.todos.push(text)
+    },
+    $components:{todo_component}
+  })
+</script>
+
+<hr/>
+
+<h1>Test6: JS getter and setter as watchers</h1>
+<div id="app7">
+  <input type="range" min="0" max="1" step="0.1" v-model="slider" :style="{opacity: my_slider}" id="app7slider"> 
+  <p :class="classes" class="gray">Color Me</p>
+  <p><input type="checkbox" v-model="black"> Paint it black </p>
+  <p><input type="checkbox" v-model="red"> Color red, setted ${times} times</p>
+</div>
+<script defer>
+  Vuenilla.bootstrap(document.getElementById("app7"), {
+    classes: new Set(),
+    get black(){
+      return this._black
+    },
+    set black(val){
+      this._black = val;
+      this.update()
+    },
+    times:0,
+    _black: false,
+    _red: false,
+    get red() {
+      return this._red
+    },
+    set red(val) {
+      this._red = val
+      this.times++;
+      this.update()
+    },
+    my_slider:0.5,
+    _slider: 0.5,
+    get slider(){
+      return this._slider
+    },
+    set slider(val){
+      this._slider = val
+      this.update()
+    },
+    update() {
+      if (this.black) this.classes.add('black')
+      else this.classes.delete('black')
+      if (this.red) this.classes.add('red')
+      else this.classes.delete('red')
+      this.my_slider = slider
+    },
+  })
+</script>
+
+<h1>Test7: reuse logic</h1>
+<div id="app8">
+  <p>
+    <input type="range" min="0" max="1" step="0.1" v-model="slider" id="app8slider" :style="{opacity: my_slider}"> 
+    <span :class="classes" class="gray">Color Me</span>
+    <input type="checkbox" v-model="black"> Paint it black
+    <input type="checkbox" v-model="red"> Color red, setted ${times} times
+  </p>
+</div>
+<div id="app9">
+  <p>
+    <input type="range" min="0" max="1" step="0.1" v-model="slider" id="app9slider" :style="{opacity: my_slider}"> 
+    <span :class="classes" class="gray">Color Me</span>
+    <input type="checkbox" v-model="black"> Paint it black
+    <input type="checkbox" v-model="red"> Color red, setted ${times} times
+  </p>
+</div>
+<script defer>
+  var app = function() {
+    return {
+      classes: new Set(),
+      get black() {
+        return this._black
+      },
+      set black(val) {
+        this._black = val;
+        this.update()
+      },
+      times: 0,
+      _black: false,
+      _red: false,
+      get red() {
+        return this._red
+      },
+      set red(val) {
+        this._red = val
+        this.times++;
+        this.update()
+      },
+      my_slider:0.5,
+      _slider: 0.5,
+      get slider(){
+        return this._slider
+      },
+      set slider(val){
+        this._slider = val
+        this.update()
+      },
+      update() {
+        if (this.black) this.classes.add('black')
+        else this.classes.delete('black')
+        if (this.red) this.classes.add('red')
+        else this.classes.delete('red')
+        this.my_slider = slider
+      },
+    }
+  };
+  Vuenilla.bootstrap(document.getElementById("app8"), app())
+  Vuenilla.bootstrap(document.getElementById("app9"), app())
+</script>
+
+
+<script src="vuenilla.js"></script>
+
+<h1>Test8: slots</h1>
+<div id="app10">
+  <ul>
+    <li v-for="todos" v-for-item="todo" v-for-index="i">
+      <span v-mount="todo_component_slots" :text="todo" @remove="_.todos.splice(_.i, 1);">
+        <!-- this element will be added in the <slot></slot> inside the template -->
+        <default><button>slot default [${i}]</button>
+        </default>
+        <!-- this element will be added in the <slot name="ciao"></slot> inside the template -->
+        <ciao>slot ciao [${i}]</ciao>
+    </span>
+    </li>
+  </ul>
+</div>
+<template id="todo_component_slots">
+  <span>
+    <button @click=" _.$parent.dispatchEvent(new Event('remove',{todo: _.todo}))">x</button>
+    <slot></slot>
+    {<slot name="ciao">xx</slot>}
+    ${text}
+    <slot name="bau">[default content]</slot>
+  </span>
+</template>
+<script defer>
+  Vuenilla.bootstrap(document.getElementById("app10"), {
+    todos: ['try', 'to', 'delete', 'me'],
+  })
+</script>
