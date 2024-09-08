@@ -366,7 +366,8 @@
             let attr = {
                 name: event,
                 value: " _." + model + "= this." + value
-            } {
+            } 
+            {
                 const ev_name = attr.name.substring(1);
                 $el.addEventListener(ev_name, (event) => {
                     new_function($el, _, attr.value, {
