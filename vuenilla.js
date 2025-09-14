@@ -51,31 +51,54 @@
     
     function *vFor(node, attr, _, plugins, _parent) {
         //const template_node = node.cloneNode(true);
-        /*const props = {
-        v_for: node.getAttribute('v-for'),
-        old_len: 0,
-        last_sibling: null,
-        prev_node: node.previousElementSibling,
-        parent_node: node.parentNode,
-        v_for_item: node.getAttribute('v-for-item') || '$item',
-        v_for_index: node.getAttribute('v-for-index') || '$index',
-        v_for_parent: node.getAttribute('v-for-parent') || '$parent',
-        parent_node: node.parentNode,
-        keys: Object.keys(_)
-        }
-        */
-        
+        const v_for = node.getAttribute('v-for');
+        const v_for_item = node.getAttribute('v-for-item') || '_item'
+        const v_for_index = node.getAttribute('v-for-index') || '_index'
+        const v_for_root = node.getAttribute('v-for-root') || '_root'
+        const child = node.firstElementChild;
+        node.removeChild(child);
         yield ()=>{
-            
+            const l = new_function(_, 'return '+v_for);
+            while (node.firstChild) {
+                node.removeChild(node.firstChild);
+            }
+            l.forEach((item,index)=>{
+                const new_child = child.cloneNode(true)
+                node.appendChild(new_child)
+                const __ = {}
+                __[v_for_item] = l[index]
+                __[v_for_index] = index
+                __[v_for_root] = _
+                bootstrap(new_child, __, plugins)
+            })            
         }
-        
-        //if (props.v_for != null) 
-        { //for the minifier or it crasehs
-            node.removeAttribute('v-for')
-            node.removeAttribute('v-for-item')
-            node.removeAttribute('v-for-index')
-            node.removeAttribute('v-for-parent')
-            node.remove();
+    }    
+    function *vConditional(node, attr, _, plugins, _parent) {
+        const conditions = [];
+        while (node.firstElementChild) {
+            conditions.push([node.firstElementChild.getAttribute('v-condition'),node.firstElementChild])
+            node.removeChild(node.firstElementChild);
+        }
+        yield ()=>{
+            while (node.firstChild) {
+                node.removeChild(node.firstChild);
+            }
+            for(let i = 0; i<conditions.length; i++){
+                const [condition, child] = conditions[i]
+                const new_child = child.cloneNode(true)
+                const criteria = (i<(conditions.length-1))?new_function(_, 'return '+condition):true;
+                if((i<(conditions.length-1) && (condition===null)) ||
+                (i==(conditions.length-1) && (condition!==null))){
+                    console.log(node)
+                    console.log(child)
+                    throw Error("v-conditional non-last block criteria can't be null")
+                }
+                if(i==(conditions.length-1) || criteria){
+                    node.appendChild(new_child)
+                    bootstrap(new_child, _, plugins)
+                    break;
+                }
+            }
         }
     }
     
@@ -107,7 +130,6 @@
                 } else if (attr.name[0] == ':') {
                     const attr_name = attr.name.substring(1);
                     yield () => node.setAttribute(attr_name, new_function(params, 'return ' + attr_value));
-                    node.removeAttribute(attr.name);
                 } else  if (attr.name[0] == '@') {
                     const that = params;
                     const ev_name = attr.name.substring(1);
@@ -118,13 +140,14 @@
                     })
                 } else  if(attr.name.startsWith('v-')){
                     const plugink = attr.name.substring(2);
-                    const plugin = plugins[plugink];
-                    console.log(plugink)
-                    yield *plugin(node, attr, params, plugins, root)
+                    if (plugink in plugins){
+                        const plugin = plugins[plugink];
+                        yield *plugin(node, attr, params, plugins, root)
+                    }
                 }
             }
         } 
-         if (node.isConnected) {
+        if (node.isConnected) {
             for (const child of node.childNodes) {
                 
                 yield* yield_templates(child,params, plugins, root);
@@ -132,7 +155,7 @@
         }
     }    
     function bootstrap(node, params, plugins, render_callback) {
-        plugins = {model:vModel, 'for':vFor, ...(plugins || {})}
+        plugins = {conditional: vConditional, model:vModel, 'for':vFor, ...(plugins || {})}
         const l = [...yield_templates(node, params, plugins, node)]
         const render = () => {
             for(const f of l){f();};
